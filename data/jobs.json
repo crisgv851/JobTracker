@@ -1,0 +1,35 @@
+[
+    {
+        "company": "Microsoft",
+        "position": "Python Developer",
+        "status": "Technical Interview",
+        "technologies": [
+            "Python",
+            "Django"
+        ],
+        "application_date": "2026-09-16",
+        "notes": "Vacante encontrada en LinkedIn"
+    },
+    {
+        "company": "Google",
+        "position": "Backend Developer",
+        "status": "Applied",
+        "technologies": [
+            "Python",
+            "FastAPI"
+        ],
+        "application_date": "2026-09-17",
+        "notes": "Vacante de Backend"
+    },
+    {
+        "company": "cartel de medellin",
+        "position": "developer",
+        "status": "Applied",
+        "technologies": [
+            "Python",
+            "Java"
+        ],
+        "application_date": "2026-06-07",
+        "notes": "Vacante por Linkedin"
+    }
+]
