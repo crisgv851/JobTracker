@@ -1,5 +1,5 @@
-from Models import Job
-from Storage import Storage
+from models import Job
+from storage import Storage
 
 
 class JobManager:
