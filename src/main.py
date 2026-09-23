@@ -2,9 +2,9 @@ from dbm import error
 from pathlib import Path
 from turtle import position
 
-from models import Job
-from storage import Storage
-from job_manager import JobManager
+from src.models import Job
+from src.storage import Storage
+from src.job_manager import JobManager
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
