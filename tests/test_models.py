@@ -38,3 +38,49 @@ def test_invalid_status():
             application_date="2026-09-22",
             notes="Remote position"
         )
+
+def test_company_cannot_be_empty():
+    with pytest.raises(ValueError):
+        Job(
+            company="",
+            position="Python Developer",
+            status="Applied",
+            technologies=["Python"],
+            application_date="2026-09-26",
+            notes="Remote position"
+        )
+
+
+def test_position_cannot_be_empty():
+    with pytest.raises(ValueError):
+        Job(
+            company="Google",
+            position="",
+            status="Applied",
+            technologies=["Python"],
+            application_date="2026-09-26",
+            notes="Remote position"
+        )        
+
+def test_company_cannot_contain_only_spaces():
+    with pytest.raises(ValueError):
+        Job(
+            company="   ",
+            position="Python Developer",
+            status="Applied",
+            technologies=["Python"],
+            application_date="2026-09-26",
+            notes="Remote position"
+        )
+
+
+def test_position_cannot_contain_only_spaces():
+    with pytest.raises(ValueError):
+        Job(
+            company="Google",
+            position="   ",
+            status="Applied",
+            technologies=["Python"],
+            application_date="2026-09-26",
+            notes="Remote position"
+        )        

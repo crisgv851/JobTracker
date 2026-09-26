@@ -19,11 +19,25 @@ class Job:
         application_date: str,
         notes: str = ""
     ):
+
+        
+        if not company.strip():
+            raise ValueError("Company cannot be empty")
         self.company = company
+
+        if not position.strip():
+            raise ValueError("Position cannot be empty")
         self.position = position
-        self.change_status(status)
+
+        if not technologies:
+            raise ValueError("Technologies cannot be empty")
         self.technologies = technologies
+
+        if not application_date:
+            raise ValueError("Application date cannot be empty")
         self.application_date = application_date
+
+        self.change_status(status)
         self.notes = notes
 
     def change_status(self, new_status: str) -> None:
