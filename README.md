@@ -2,20 +2,31 @@
 
 JobTracker is a Python application for managing and tracking job applications.
 
-The application allows users to register job opportunities, search for applications, update their status, and remove records. Data is persisted locally using a JSON file.
+The application allows users to register job opportunities, search and filter applications, update their status, remove records, and view application statistics. Data is persisted locally using a JSON file.
+
+The project was developed to practice Python, object-oriented programming, software design, data persistence, validation, automated testing, and Git version control.
 
 ## Features
 
 - Create job applications
 - List registered jobs
 - Search jobs by company and position
+- Search jobs by technology
+- Filter jobs by application status
 - Update application status
 - Delete job applications
+- View application statistics
+- Calculate application success rate
 - Persist data using JSON
+- Validate company and position information
+- Validate required technologies
+- Validate application dates
 - Validate job statuses
-- Handle invalid or missing JSON files
 - Prevent duplicate job applications
+- Handle missing JSON files
+- Handle invalid JSON files
 - Automated tests with pytest
+- Case-insensitive searches
 
 ## Technologies
 
@@ -95,14 +106,17 @@ python -m src.main
 The application provides the following menu:
 
 ```text
-Job Tracker =)
+Job Tracker
 
-1. Ver Trabajos
-2. Agregar Trabajo
-3. Buscar Trabajo
-4. Actualizar Estado de Trabajo
-5. Eliminar Trabajo
-6. Salir
+1. Ver trabajos
+2. Agregar trabajo
+3. Buscar trabajo
+4. Filtrar por estado
+5. Buscar por tecnología
+6. Actualizar estado
+7. Eliminar trabajo
+8. Ver estadísticas
+9. Salir
 ```
 
 ## Job Statuses
@@ -117,6 +131,31 @@ The application currently supports the following job application statuses:
 - Hired
 - Rejected
 
+## Job Information
+
+Each job application contains the following information:
+
+| Field | Description |
+|---|---|
+| Company | Company offering the position |
+| Position | Job position |
+| Status | Current application status |
+| Technologies | Technologies required for the position |
+| Application Date | Date when the application was submitted |
+| Notes | Additional information about the application |
+
+The application date must use the following format:
+
+```text
+YYYY-MM-DD
+```
+
+Example:
+
+```text
+2026-09-22
+```
+
 ## Running Tests
 
 Run the complete test suite with:
@@ -125,34 +164,41 @@ Run the complete test suite with:
 python -m pytest
 ```
 
-The project currently contains **12 automated tests** covering the main functionality.
+The project currently contains **71 automated tests** covering the main components of the application.
 
-Tests include:
+Current test result:
+
+```text
+71 passed
+```
+
+The tests cover:
 
 - Job creation
+- Company validation
+- Position validation
+- Technology validation
+- Application date validation
 - Job status validation
 - Job status changes
+- Job serialization
+- Job deserialization
 - Job searching
+- Case-insensitive searches
+- Search by status
+- Search by technology
 - Duplicate job prevention
 - Job deletion
+- Job updates
+- Job loading
+- Job persistence
+- Statistics
+- Success rate calculation
 - JSON loading
 - Missing JSON files
 - Invalid JSON files
 - JSON structure validation
-
-Current result:
-
-```text
-============================= test session starts =============================
-
-collected 12 items
-
-tests/test_job_manager.py .....                                    [ 41%]
-tests/test_models.py ...                                           [ 66%]
-tests/test_storage.py ....                                         [100%]
-
-============================== 12 passed ==============================
-```
+- Data persistence
 
 ## Architecture
 
@@ -165,6 +211,10 @@ Contains the `Job` class, which represents a job application.
 It is responsible for:
 
 - Storing job information
+- Validating company information
+- Validating position information
+- Validating technologies
+- Validating application dates
 - Validating job statuses
 - Changing job statuses
 - Converting jobs to dictionaries
@@ -174,14 +224,19 @@ It is responsible for:
 
 Contains the `JobManager` class.
 
-It is responsible for:
+It is responsible for the application's business logic, including:
 
 - Adding jobs
 - Searching jobs
+- Searching jobs by status
+- Searching jobs by technology
 - Updating job statuses
 - Removing jobs
 - Loading jobs
 - Saving changes
+- Preventing duplicate applications
+- Generating application statistics
+- Calculating the success rate
 
 ### `storage.py`
 
@@ -191,6 +246,7 @@ It is responsible for:
 
 - Reading JSON data
 - Saving JSON data
+- Creating the data directory when necessary
 - Handling missing files
 - Handling invalid JSON
 - Validating the JSON structure
@@ -204,7 +260,8 @@ It is responsible for:
 - Displaying the menu
 - Reading user input
 - Calling the appropriate `JobManager` operations
-- Displaying results and errors
+- Displaying results
+- Displaying validation errors
 
 ## Data Persistence
 
@@ -232,12 +289,51 @@ Example:
 ]
 ```
 
+The JSON file is used as the application's local persistence layer.
+
+## Statistics
+
+JobTracker provides basic statistics about the registered applications.
+
+The statistics include:
+
+- Total number of applications
+- Number of applications in each status
+- Success rate
+
+The current success rate is calculated using applications with the following statuses:
+
+```text
+Offer
+Hired
+```
+
+The result is expressed as a percentage.
+
+## Input Validation
+
+The application validates user-provided data before storing it.
+
+Examples include:
+
+- Company cannot be empty.
+- Position cannot be empty.
+- Technologies must be provided as a list.
+- Technologies cannot be empty.
+- Technology values must be strings.
+- Technology values cannot be empty.
+- Application date must use `YYYY-MM-DD`.
+- Status must be one of the supported statuses.
+- Notes must be a string.
+- Duplicate applications for the same company and position are prevented.
+
 ## Development Practices
 
 This project follows several software development practices:
 
 - Object-oriented programming
 - Separation of responsibilities
+- Modular project structure
 - Automated testing
 - Input validation
 - Error handling
@@ -245,7 +341,7 @@ This project follows several software development practices:
 - Git version control
 - Conventional commit messages
 - Semantic versioning
-- Modular project structure
+- Test-driven development practices
 
 ## Git Workflow
 
@@ -262,6 +358,12 @@ docs: improve documentation
 chore: update project configuration
 ```
 
+The main branch is:
+
+```text
+main
+```
+
 ## Versioning
 
 The project follows Semantic Versioning:
@@ -270,7 +372,7 @@ The project follows Semantic Versioning:
 MAJOR.MINOR.PATCH
 ```
 
-Current version:
+Current development version:
 
 ```text
 v0.2.0
@@ -292,7 +394,7 @@ Included:
 
 #### v0.2.0
 
-Improved storage reliability and automated testing.
+Improved data validation, storage reliability, application management, and automated testing.
 
 Included:
 
@@ -300,28 +402,34 @@ Included:
 - Invalid JSON handling
 - Missing file handling
 - JSON structure validation
+- Job data validation
+- Application date validation
+- Duplicate application prevention
+- Search and filtering functionality
+- Application statistics
 - Automated tests
-- Storage tests
-- 12 tests passing
+- Expanded test coverage
 
 ## Roadmap
 
 Planned improvements for future versions:
 
-- [ ] Filter jobs by status
 - [ ] Sort applications by date
-- [ ] Improve input validation
-- [ ] Add better error messages
+- [ ] Improve CLI user experience
 - [ ] Add database persistence
 - [ ] Create a REST API
 - [ ] Create a web interface
 - [ ] Add authentication
 - [ ] Add automated CI/CD
+- [ ] Add logging
 - [ ] Improve application architecture
+- [ ] Add database migrations
+- [ ] Add API documentation
 
 ## Author
 
 **Cristian Gonzalez**
 
-GitHub:  
+GitHub:
+
 https://github.com/crisgv851/JobTracker
