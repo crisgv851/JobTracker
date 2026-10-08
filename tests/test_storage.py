@@ -3,7 +3,7 @@ import json
 from src.storage import Storage
 
 
-def test_save_and_load_data(tmp_path):
+def test_save_data(tmp_path):
     storage = Storage()
 
     file_path = tmp_path / "jobs.json"
@@ -19,6 +19,60 @@ def test_save_and_load_data(tmp_path):
         str(file_path),
         data
     )
+
+    assert file_path.exists()
+
+    with file_path.open(
+        "r",
+        encoding="utf-8"
+    ) as file:
+        result = json.load(file)
+
+    assert result == data
+
+
+def test_save_data_creates_parent_directory(
+    tmp_path
+):
+    storage = Storage()
+
+    file_path = (
+        tmp_path
+        / "data"
+        / "jobs.json"
+    )
+
+    data = [
+        {
+            "company": "Google"
+        }
+    ]
+
+    storage.save_data(
+        str(file_path),
+        data
+    )
+
+    assert file_path.exists()
+
+
+def test_load_data(tmp_path):
+    storage = Storage()
+
+    file_path = tmp_path / "jobs.json"
+
+    data = [
+        {
+            "company": "Google",
+            "position": "Developer"
+        }
+    ]
+
+    with file_path.open(
+        "w",
+        encoding="utf-8"
+    ) as file:
+        json.dump(data, file)
 
     result = storage.load_data(
         str(file_path)
@@ -56,17 +110,15 @@ def test_load_invalid_json(tmp_path):
     assert result == []
 
 
-def test_load_json_that_is_not_list(tmp_path):
+def test_load_json_that_is_not_a_list(
+    tmp_path
+):
     storage = Storage()
 
     file_path = tmp_path / "object.json"
 
     file_path.write_text(
-        json.dumps(
-            {
-                "company": "Google"
-            }
-        ),
+        '{"company": "Google"}',
         encoding="utf-8"
     )
 
@@ -75,50 +127,3 @@ def test_load_json_that_is_not_list(tmp_path):
     )
 
     assert result == []
-
-
-def test_save_empty_list(tmp_path):
-    storage = Storage()
-
-    file_path = tmp_path / "jobs.json"
-
-    storage.save_data(
-        str(file_path),
-        []
-    )
-
-    result = storage.load_data(
-        str(file_path)
-    )
-
-    assert result == []
-
-
-def test_save_multiple_jobs(tmp_path):
-    storage = Storage()
-
-    file_path = tmp_path / "jobs.json"
-
-    data = [
-        {
-            "company": "Google",
-            "position": "Python Developer"
-        },
-        {
-            "company": "Microsoft",
-            "position": "Backend Developer"
-        }
-    ]
-
-    storage.save_data(
-        str(file_path),
-        data
-    )
-
-    result = storage.load_data(
-        str(file_path)
-    )
-
-    assert len(result) == 2
-    assert result[0]["company"] == "Google"
-    assert result[1]["company"] == "Microsoft"

@@ -16,10 +16,14 @@ def show_menu():
     print("3. Buscar trabajo")
     print("4. Filtrar por estado")
     print("5. Buscar por tecnología")
-    print("6. Actualizar estado")
-    print("7. Eliminar trabajo")
-    print("8. Ver estadísticas")
-    print("9. Salir")
+    print("6. Buscar por empresa")
+    print("7. Buscar por cargo")
+    print("8. Filtrar por rango de fechas")
+    print("9. Ver trabajos recientes")
+    print("10. Actualizar estado")
+    print("11. Eliminar trabajo")
+    print("12. Ver estadísticas")
+    print("13. Salir")
 
 
 def main():
@@ -56,15 +60,27 @@ def main():
             find_by_technology_cli(manager)
 
         elif option == "6":
-            update_status_cli(manager)
+            find_by_company_cli(manager)
 
         elif option == "7":
-            remove_job_cli(manager)
+            find_by_position_cli(manager)
 
         elif option == "8":
-            show_statistics_cli(manager)
+            find_by_date_range_cli(manager)
 
         elif option == "9":
+            show_recent_jobs_cli(manager)
+
+        elif option == "10":
+            update_status_cli(manager)
+
+        elif option == "11":
+            remove_job_cli(manager)
+
+        elif option == "12":
+            show_statistics_cli(manager)
+
+        elif option == "13":
             print("Saliendo del programa...")
             break
 
@@ -173,19 +189,7 @@ def find_job_cli(manager: JobManager):
         print("Trabajo no encontrado.")
         return
 
-    print("Trabajo encontrado:")
-    print(f"Empresa: {job.company}")
-    print(f"Cargo: {job.position}")
-    print(f"Estado: {job.status}")
-    print(
-        f"Tecnologías: "
-        f"{', '.join(job.technologies)}"
-    )
-    print(
-        f"Fecha de aplicación: "
-        f"{job.application_date}"
-    )
-    print(f"Notas: {job.notes}")
+    print_job(job)
 
 
 def find_by_status_cli(manager: JobManager):
@@ -196,27 +200,10 @@ def find_by_status_cli(manager: JobManager):
     try:
         jobs = manager.find_by_status(status)
 
-        if not jobs:
-            print(
-                "No hay trabajos con ese estado."
-            )
-            return
-
-        print(
-            f"Trabajos con estado "
-            f"'{status.strip()}':"
-        )
-
-        for index, job in enumerate(
+        show_job_list(
             jobs,
-            start=1
-        ):
-            print(
-                f"{index}. "
-                f"{job.company} - "
-                f"{job.position} "
-                f"({job.status})"
-            )
+            f"Trabajos con estado '{status.strip()}':"
+        )
 
     except ValueError as error:
         print(f"Error: {error}")
@@ -232,27 +219,103 @@ def find_by_technology_cli(manager: JobManager):
             technology
         )
 
-        if not jobs:
-            print(
-                "No hay trabajos que "
-                "requieran esa tecnología."
-            )
-            return
-
-        print(
+        show_job_list(
+            jobs,
             f"Trabajos que requieren "
             f"'{technology.strip()}':"
         )
 
-        for index, job in enumerate(
+    except ValueError as error:
+        print(f"Error: {error}")
+
+
+def find_by_company_cli(manager: JobManager):
+    company = input(
+        "Ingrese el nombre de la empresa: "
+    )
+
+    try:
+        jobs = manager.find_by_company(
+            company
+        )
+
+        show_job_list(
             jobs,
-            start=1
-        ):
+            f"Trabajos en '{company.strip()}':"
+        )
+
+    except ValueError as error:
+        print(f"Error: {error}")
+
+
+def find_by_position_cli(manager: JobManager):
+    position = input(
+        "Ingrese el cargo: "
+    )
+
+    try:
+        jobs = manager.find_by_position(
+            position
+        )
+
+        show_job_list(
+            jobs,
+            f"Trabajos para '{position.strip()}':"
+        )
+
+    except ValueError as error:
+        print(f"Error: {error}")
+
+
+def find_by_date_range_cli(manager: JobManager):
+    start_date = input(
+        "Ingrese la fecha inicial (YYYY-MM-DD): "
+    )
+
+    end_date = input(
+        "Ingrese la fecha final (YYYY-MM-DD): "
+    )
+
+    try:
+        jobs = manager.find_by_date_range(
+            start_date,
+            end_date
+        )
+
+        show_job_list(
+            jobs,
+            f"Trabajos entre "
+            f"{start_date} y {end_date}:"
+        )
+
+    except ValueError as error:
+        print(f"Error: {error}")
+
+
+def show_recent_jobs_cli(manager: JobManager):
+    limit_input = input(
+        "¿Cuántos trabajos recientes desea ver? "
+        "Presione Enter para 5: "
+    ).strip()
+
+    if not limit_input:
+        limit = 5
+    else:
+        try:
+            limit = int(limit_input)
+        except ValueError:
             print(
-                f"{index}. "
-                f"{job.company} - "
-                f"{job.position}"
+                "Error: El límite debe ser un entero."
             )
+            return
+
+    try:
+        jobs = manager.get_recent_jobs(limit)
+
+        show_job_list(
+            jobs,
+            f"Trabajos más recientes ({limit}):"
+        )
 
     except ValueError as error:
         print(f"Error: {error}")
@@ -314,6 +377,7 @@ def show_statistics_cli(manager: JobManager):
     statistics = manager.get_statistics()
 
     print("Estadísticas")
+
     print(
         f"Total de aplicaciones: "
         f"{statistics['total']}"
@@ -329,6 +393,45 @@ def show_statistics_cli(manager: JobManager):
         f"Tasa de éxito: "
         f"{statistics['success_rate']}%"
     )
+
+
+def show_job(job: Job):
+    print("Trabajo encontrado:")
+    print(f"Empresa: {job.company}")
+    print(f"Cargo: {job.position}")
+    print(f"Estado: {job.status}")
+    print(
+        f"Tecnologías: "
+        f"{', '.join(job.technologies)}"
+    )
+    print(
+        f"Fecha de aplicación: "
+        f"{job.application_date}"
+    )
+    print(f"Notas: {job.notes}")
+
+
+def show_job_list(
+    jobs: list[Job],
+    title: str
+):
+    if not jobs:
+        print("No se encontraron trabajos.")
+        return
+
+    print(title)
+
+    for index, job in enumerate(
+        jobs,
+        start=1
+    ):
+        print(
+            f"{index}. "
+            f"{job.company} - "
+            f"{job.position} "
+            f"({job.status}) - "
+            f"{job.application_date}"
+        )
 
 
 if __name__ == "__main__":

@@ -1,16 +1,24 @@
+from datetime import datetime
+
 from src.models import Job
 from src.storage import Storage
 
 
 class JobManager:
 
-    def __init__(self, storage: Storage, file_path: str):
+    def __init__(
+        self,
+        storage: Storage,
+        file_path: str
+    ):
         self.storage = storage
         self.file_path = file_path
         self.jobs: list[Job] = []
 
     def load_jobs(self) -> None:
-        data = self.storage.load_data(self.file_path)
+        data = self.storage.load_data(
+            self.file_path
+        )
 
         self.jobs = [
             Job.from_dict(job_data)
@@ -36,15 +44,7 @@ class JobManager:
 
         self.jobs.append(job)
 
-        data = [
-            job.to_dict()
-            for job in self.jobs
-        ]
-
-        self.storage.save_data(
-            self.file_path,
-            data
-        )
+        self._save_jobs()
 
     def find_job(
         self,
@@ -75,6 +75,52 @@ class JobManager:
 
         return None
 
+    def find_by_company(
+        self,
+        company: str
+    ) -> list[Job]:
+
+        if not isinstance(company, str):
+            raise ValueError(
+                "Company must be a string."
+            )
+
+        company = company.strip()
+
+        if not company:
+            raise ValueError(
+                "Company cannot be empty."
+            )
+
+        return [
+            job
+            for job in self.jobs
+            if job.company.lower() == company.lower()
+        ]
+
+    def find_by_position(
+        self,
+        position: str
+    ) -> list[Job]:
+
+        if not isinstance(position, str):
+            raise ValueError(
+                "Position must be a string."
+            )
+
+        position = position.strip()
+
+        if not position:
+            raise ValueError(
+                "Position cannot be empty."
+            )
+
+        return [
+            job
+            for job in self.jobs
+            if job.position.lower() == position.lower()
+        ]
+
     def find_by_status(
         self,
         status: str
@@ -92,7 +138,10 @@ class JobManager:
         matching_status = None
 
         for valid_status in Job.VALID_STATUSES:
-            if valid_status.lower() == normalized_status:
+            if (
+                valid_status.lower()
+                == normalized_status
+            ):
                 matching_status = valid_status
                 break
 
@@ -134,6 +183,83 @@ class JobManager:
                 for job_technology in job.technologies
             )
         ]
+
+    def find_by_date_range(
+        self,
+        start_date: str,
+        end_date: str
+    ) -> list[Job]:
+
+        self._validate_date(start_date)
+        self._validate_date(end_date)
+
+        start = datetime.strptime(
+            start_date,
+            "%Y-%m-%d"
+        )
+
+        end = datetime.strptime(
+            end_date,
+            "%Y-%m-%d"
+        )
+
+        if start > end:
+            raise ValueError(
+                "Start date cannot be after end date."
+            )
+
+        return [
+            job
+            for job in self.jobs
+            if start
+            <= datetime.strptime(
+                job.application_date,
+                "%Y-%m-%d"
+            )
+            <= end
+        ]
+
+    def sort_by_date(
+        self,
+        descending: bool = True
+    ) -> list[Job]:
+
+        if not isinstance(descending, bool):
+            raise ValueError(
+                "Descending must be a boolean."
+            )
+
+        return sorted(
+            self.jobs,
+            key=lambda job: job.application_date,
+            reverse=descending
+        )
+
+    def get_recent_jobs(
+        self,
+        limit: int = 5
+    ) -> list[Job]:
+
+        if not isinstance(limit, int):
+            raise ValueError(
+                "Limit must be an integer."
+            )
+
+        if isinstance(limit, bool):
+            raise ValueError(
+                "Limit must be an integer."
+            )
+
+        if limit <= 0:
+            raise ValueError(
+                "Limit must be greater than zero."
+            )
+
+        sorted_jobs = self.sort_by_date(
+            descending=True
+        )
+
+        return sorted_jobs[:limit]
 
     def get_statistics(self) -> dict:
         statistics = {
@@ -189,15 +315,7 @@ class JobManager:
 
         self.jobs.remove(job_to_remove)
 
-        data = [
-            job.to_dict()
-            for job in self.jobs
-        ]
-
-        self.storage.save_data(
-            self.file_path,
-            data
-        )
+        self._save_jobs()
 
     def update_status(
         self,
@@ -219,6 +337,9 @@ class JobManager:
 
         job.change_status(new_status)
 
+        self._save_jobs()
+
+    def _save_jobs(self) -> None:
         data = [
             job.to_dict()
             for job in self.jobs
@@ -228,3 +349,30 @@ class JobManager:
             self.file_path,
             data
         )
+
+    @staticmethod
+    def _validate_date(date_value: str) -> None:
+        if (
+            not isinstance(date_value, str)
+            or not date_value
+        ):
+            raise ValueError(
+                "Date cannot be empty."
+            )
+
+        try:
+            parsed_date = datetime.strptime(
+                date_value,
+                "%Y-%m-%d"
+            )
+
+            if (
+                parsed_date.strftime("%Y-%m-%d")
+                != date_value
+            ):
+                raise ValueError
+
+        except ValueError:
+            raise ValueError(
+                "Date must have the format YYYY-MM-DD."
+            )

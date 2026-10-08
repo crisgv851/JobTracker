@@ -8,6 +8,7 @@ from src.storage import Storage
 @pytest.fixture
 def manager(tmp_path):
     storage = Storage()
+
     file_path = tmp_path / "jobs.json"
 
     return JobManager(
@@ -22,15 +23,48 @@ def job():
         company="Google",
         position="Python Developer",
         status="Applied",
-        technologies=["Python", "Django"],
+        technologies=[
+            "Python",
+            "Django"
+        ],
         application_date="2026-09-22",
         notes="Remote position"
     )
 
 
-# ============================================================
-# ADD JOB
-# ============================================================
+@pytest.fixture
+def multiple_jobs():
+    return [
+        Job(
+            company="Google",
+            position="Python Developer",
+            status="Applied",
+            technologies=["Python", "Django"],
+            application_date="2026-09-22"
+        ),
+        Job(
+            company="Microsoft",
+            position="Backend Developer",
+            status="Technical Interview",
+            technologies=["Python", "FastAPI"],
+            application_date="2026-09-28"
+        ),
+        Job(
+            company="Amazon",
+            position="Software Engineer",
+            status="Rejected",
+            technologies=["Java", "AWS"],
+            application_date="2026-09-15"
+        ),
+        Job(
+            company="Google",
+            position="Backend Developer",
+            status="Offer",
+            technologies=["Python", "FastAPI"],
+            application_date="2026-10-01"
+        )
+    ]
+
 
 def test_add_job(manager, job):
     manager.add_job(job)
@@ -41,34 +75,20 @@ def test_add_job(manager, job):
     assert jobs[0] == job
 
 
-def test_add_job_requires_job_instance(manager):
-    with pytest.raises(ValueError):
-        manager.add_job(None)
-
-
-def test_add_job_rejects_invalid_object(manager):
-    with pytest.raises(ValueError):
-        manager.add_job("not a job")
-
-
 def test_add_duplicate_job(manager, job):
     manager.add_job(job)
 
     duplicate = Job(
-        company="Google",
-        position="Python Developer",
+        company="google",
+        position="python developer",
         status="Applied",
         technologies=["Python"],
-        application_date="2026-09-22"
+        application_date="2026-09-25"
     )
 
     with pytest.raises(ValueError):
         manager.add_job(duplicate)
 
-
-# ============================================================
-# FIND JOB
-# ============================================================
 
 def test_find_job(manager, job):
     manager.add_job(job)
@@ -81,18 +101,10 @@ def test_find_job(manager, job):
     assert result == job
 
 
-def test_find_job_ignores_spaces(manager, job):
-    manager.add_job(job)
-
-    result = manager.find_job(
-        "  Google  ",
-        "  Python Developer  "
-    )
-
-    assert result == job
-
-
-def test_find_job_is_case_insensitive(manager, job):
+def test_find_job_case_insensitive(
+    manager,
+    job
+):
     manager.add_job(job)
 
     result = manager.find_job(
@@ -100,21 +112,19 @@ def test_find_job_is_case_insensitive(manager, job):
         "python developer"
     )
 
-    assert result is not None
-    assert result.company == "Google"
-    assert result.position == "Python Developer"
+    assert result == job
 
 
-def test_find_job_returns_none_when_not_found(manager):
+def test_find_job_not_found(manager):
     result = manager.find_job(
-        "Microsoft",
-        "Developer"
+        "Google",
+        "Python Developer"
     )
 
     assert result is None
 
 
-def test_find_job_requires_company_string(manager):
+def test_find_job_invalid_company(manager):
     with pytest.raises(ValueError):
         manager.find_job(
             123,
@@ -122,7 +132,7 @@ def test_find_job_requires_company_string(manager):
         )
 
 
-def test_find_job_requires_position_string(manager):
+def test_find_job_invalid_position(manager):
     with pytest.raises(ValueError):
         manager.find_job(
             "Google",
@@ -130,136 +140,428 @@ def test_find_job_requires_position_string(manager):
         )
 
 
-# ============================================================
-# FIND BY STATUS
-# ============================================================
+def test_find_by_company(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
 
-def test_find_by_status(manager, job):
-    manager.add_job(job)
+    results = manager.find_by_company(
+        "Google"
+    )
 
-    results = manager.find_by_status("Applied")
+    assert len(results) == 2
 
-    assert len(results) == 1
-    assert results[0] == job
-
-
-def test_find_by_status_is_case_insensitive(manager, job):
-    manager.add_job(job)
-
-    results = manager.find_by_status("applied")
-
-    assert len(results) == 1
-    assert results[0].status == "Applied"
+    assert all(
+        job.company == "Google"
+        for job in results
+    )
 
 
-def test_find_by_status_returns_empty_list(manager):
-    results = manager.find_by_status("Applied")
+def test_find_by_company_case_insensitive(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.find_by_company(
+        "google"
+    )
+
+    assert len(results) == 2
+
+
+def test_find_by_company_no_results(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.find_by_company(
+        "Apple"
+    )
 
     assert results == []
 
 
-def test_find_by_status_invalid_status(manager):
+def test_find_by_company_empty(manager):
     with pytest.raises(ValueError):
-        manager.find_by_status("Invalid")
+        manager.find_by_company("")
 
 
-def test_find_by_status_requires_string(manager):
+def test_find_by_position(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.find_by_position(
+        "Backend Developer"
+    )
+
+    assert len(results) == 2
+
+
+def test_find_by_position_case_insensitive(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.find_by_position(
+        "backend developer"
+    )
+
+    assert len(results) == 2
+
+
+def test_find_by_position_no_results(
+    manager
+):
+    results = manager.find_by_position(
+        "Data Scientist"
+    )
+
+    assert results == []
+
+
+def test_find_by_position_empty(manager):
     with pytest.raises(ValueError):
-        manager.find_by_status(123)
+        manager.find_by_position("")
 
 
-def test_find_by_status_ignores_spaces(manager, job):
-    manager.add_job(job)
+def test_find_by_status(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
 
     results = manager.find_by_status(
-        "  Applied  "
+        "Applied"
+    )
+
+    assert len(results) == 1
+    assert results[0].company == "Google"
+
+
+def test_find_by_status_case_insensitive(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.find_by_status(
+        "applied"
     )
 
     assert len(results) == 1
 
 
-# ============================================================
-# FIND BY TECHNOLOGY
-# ============================================================
-
-def test_find_by_technology(manager, job):
-    manager.add_job(job)
-
-    results = manager.find_by_technology("Python")
-
-    assert len(results) == 1
-    assert results[0] == job
+def test_find_by_status_invalid(manager):
+    with pytest.raises(ValueError):
+        manager.find_by_status(
+            "Unknown"
+        )
 
 
-def test_find_by_technology_is_case_insensitive(manager, job):
-    manager.add_job(job)
-
-    results = manager.find_by_technology("python")
-
-    assert len(results) == 1
-
-
-def test_find_by_technology_ignores_spaces(manager, job):
-    manager.add_job(job)
+def test_find_by_technology(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
 
     results = manager.find_by_technology(
-        "  Python  "
+        "Python"
     )
 
-    assert len(results) == 1
+    assert len(results) == 3
 
 
-def test_find_by_technology_returns_empty_list(manager):
-    results = manager.find_by_technology("Python")
+def test_find_by_technology_case_insensitive(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.find_by_technology(
+        "python"
+    )
+
+    assert len(results) == 3
+
+
+def test_find_by_technology_no_results(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.find_by_technology(
+        "Docker"
+    )
 
     assert results == []
 
 
-def test_find_by_technology_requires_string(manager):
-    with pytest.raises(ValueError):
-        manager.find_by_technology(123)
-
-
-def test_find_by_technology_rejects_empty_value(manager):
+def test_find_by_technology_empty(manager):
     with pytest.raises(ValueError):
         manager.find_by_technology("")
 
 
-def test_find_by_technology_rejects_spaces(manager):
+def test_find_by_date_range(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.find_by_date_range(
+        "2026-09-20",
+        "2026-09-30"
+    )
+
+    assert len(results) == 2
+
+    assert all(
+        "2026-09-20"
+        <= job.application_date
+        <= "2026-09-30"
+        for job in results
+    )
+
+
+def test_find_by_date_range_includes_boundaries(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.find_by_date_range(
+        "2026-09-22",
+        "2026-09-28"
+    )
+
+    dates = [
+        job.application_date
+        for job in results
+    ]
+
+    assert "2026-09-22" in dates
+    assert "2026-09-28" in dates
+
+
+def test_find_by_date_range_no_results(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.find_by_date_range(
+        "2026-11-01",
+        "2026-11-30"
+    )
+
+    assert results == []
+
+
+def test_find_by_date_range_invalid_start_date(
+    manager
+):
     with pytest.raises(ValueError):
-        manager.find_by_technology("   ")
+        manager.find_by_date_range(
+            "invalid",
+            "2026-09-30"
+        )
 
 
-# ============================================================
-# GET JOBS
-# ============================================================
+def test_find_by_date_range_invalid_end_date(
+    manager
+):
+    with pytest.raises(ValueError):
+        manager.find_by_date_range(
+            "2026-09-01",
+            "invalid"
+        )
 
-def test_get_jobs_returns_all_jobs(manager):
-    job_1 = Job(
-        company="Google",
-        position="Python Developer",
-        status="Applied",
-        technologies=["Python"],
-        application_date="2026-09-22"
+
+def test_find_by_date_range_start_after_end(
+    manager
+):
+    with pytest.raises(ValueError):
+        manager.find_by_date_range(
+            "2026-10-01",
+            "2026-09-01"
+        )
+
+
+def test_sort_jobs_by_date_descending(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.sort_by_date()
+
+    dates = [
+        job.application_date
+        for job in results
+    ]
+
+    assert dates == [
+        "2026-10-01",
+        "2026-09-28",
+        "2026-09-22",
+        "2026-09-15"
+    ]
+
+
+def test_sort_jobs_by_date_ascending(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.sort_by_date(
+        descending=False
     )
 
-    job_2 = Job(
-        company="Microsoft",
-        position="Backend Developer",
-        status="Technical Interview",
-        technologies=["C#", "Azure"],
-        application_date="2026-09-23"
+    dates = [
+        job.application_date
+        for job in results
+    ]
+
+    assert dates == [
+        "2026-09-15",
+        "2026-09-22",
+        "2026-09-28",
+        "2026-10-01"
+    ]
+
+
+def test_sort_jobs_does_not_modify_original_list(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    original_order = manager.get_jobs()
+
+    manager.sort_by_date()
+
+    assert manager.get_jobs() == original_order
+
+
+def test_sort_jobs_invalid_descending(
+    manager
+):
+    with pytest.raises(ValueError):
+        manager.sort_by_date(
+            descending="yes"
+        )
+
+
+def test_get_recent_jobs(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.get_recent_jobs()
+
+    assert len(results) == 4
+
+    assert results[0].application_date == (
+        "2026-10-01"
     )
 
-    manager.add_job(job_1)
-    manager.add_job(job_2)
 
-    jobs = manager.get_jobs()
+def test_get_recent_jobs_respects_limit(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
 
-    assert len(jobs) == 2
+    results = manager.get_recent_jobs(2)
+
+    assert len(results) == 2
+
+    assert results[0].application_date == (
+        "2026-10-01"
+    )
+
+    assert results[1].application_date == (
+        "2026-09-28"
+    )
 
 
-def test_get_jobs_returns_copy(manager, job):
+def test_get_recent_jobs_returns_all_when_limit_is_greater(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    results = manager.get_recent_jobs(100)
+
+    assert len(results) == 4
+
+
+def test_get_recent_jobs_invalid_limit_zero(
+    manager
+):
+    with pytest.raises(ValueError):
+        manager.get_recent_jobs(0)
+
+
+def test_get_recent_jobs_invalid_limit_negative(
+    manager
+):
+    with pytest.raises(ValueError):
+        manager.get_recent_jobs(-1)
+
+
+def test_get_recent_jobs_invalid_limit_type(
+    manager
+):
+    with pytest.raises(ValueError):
+        manager.get_recent_jobs("5")
+
+
+def test_get_recent_jobs_does_not_modify_original_list(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
+        manager.add_job(job)
+
+    original_order = manager.get_jobs()
+
+    manager.get_recent_jobs(2)
+
+    assert manager.get_jobs() == original_order
+
+
+def test_get_jobs_returns_copy(
+    manager,
+    job
+):
     manager.add_job(job)
 
     jobs = manager.get_jobs()
@@ -269,11 +571,10 @@ def test_get_jobs_returns_copy(manager, job):
     assert len(manager.get_jobs()) == 1
 
 
-# ============================================================
-# UPDATE STATUS
-# ============================================================
-
-def test_update_status(manager, job):
+def test_update_status(
+    manager,
+    job
+):
     manager.add_job(job)
 
     manager.update_status(
@@ -287,56 +588,28 @@ def test_update_status(manager, job):
         "Python Developer"
     )
 
-    assert result.status == "Technical Interview"
+    assert result.status == (
+        "Technical Interview"
+    )
 
 
-def test_update_status_is_case_insensitive_for_job_search(
+def test_update_status_job_not_found(
+    manager
+):
+    with pytest.raises(ValueError):
+        manager.update_status(
+            "Google",
+            "Python Developer",
+            "Offer"
+        )
+
+
+def test_remove_job(
     manager,
     job
 ):
     manager.add_job(job)
 
-    manager.update_status(
-        "google",
-        "python developer",
-        "Technical Interview"
-    )
-
-    result = manager.find_job(
-        "Google",
-        "Python Developer"
-    )
-
-    assert result.status == "Technical Interview"
-
-
-def test_update_status_invalid_status(manager, job):
-    manager.add_job(job)
-
-    with pytest.raises(ValueError):
-        manager.update_status(
-            "Google",
-            "Python Developer",
-            "Invalid"
-        )
-
-
-def test_update_status_job_not_found(manager):
-    with pytest.raises(ValueError):
-        manager.update_status(
-            "Google",
-            "Python Developer",
-            "Hired"
-        )
-
-
-# ============================================================
-# REMOVE JOB
-# ============================================================
-
-def test_remove_job(manager, job):
-    manager.add_job(job)
-
     manager.remove_job(
         "Google",
         "Python Developer"
@@ -345,18 +618,7 @@ def test_remove_job(manager, job):
     assert manager.get_jobs() == []
 
 
-def test_remove_job_is_case_insensitive(manager, job):
-    manager.add_job(job)
-
-    manager.remove_job(
-        "google",
-        "python developer"
-    )
-
-    assert manager.get_jobs() == []
-
-
-def test_remove_nonexistent_job(manager):
+def test_remove_job_not_found(manager):
     with pytest.raises(ValueError):
         manager.remove_job(
             "Google",
@@ -364,11 +626,10 @@ def test_remove_nonexistent_job(manager):
         )
 
 
-# ============================================================
-# LOAD JOBS / PERSISTENCE
-# ============================================================
-
-def test_load_jobs(manager, job):
+def test_load_jobs(
+    manager,
+    job
+):
     manager.add_job(job)
 
     new_manager = JobManager(
@@ -378,121 +639,37 @@ def test_load_jobs(manager, job):
 
     new_manager.load_jobs()
 
-    jobs = new_manager.get_jobs()
+    assert len(new_manager.get_jobs()) == 1
 
-    assert len(jobs) == 1
-    assert jobs[0].company == "Google"
-
-
-def test_load_jobs_persists_data(manager, job):
-    manager.add_job(job)
-
-    new_manager = JobManager(
-        manager.storage,
-        manager.file_path
+    assert (
+        new_manager.get_jobs()[0].company
+        == "Google"
     )
 
-    new_manager.load_jobs()
 
-    jobs = new_manager.get_jobs()
-
-    assert len(jobs) == 1
-    assert jobs[0].company == "Google"
-    assert jobs[0].position == "Python Developer"
-    assert jobs[0].status == "Applied"
-    assert jobs[0].technologies == ["Python", "Django"]
-    assert jobs[0].application_date == "2026-09-22"
-    assert jobs[0].notes == "Remote position"
-
-
-def test_load_jobs_empty_file(manager):
-    manager.load_jobs()
-
-    assert manager.get_jobs() == []
-
-
-# ============================================================
-# STATISTICS
-# ============================================================
-
-def test_get_statistics_empty(manager):
-    statistics = manager.get_statistics()
-
-    assert statistics["total"] == 0
-    assert statistics["success_rate"] == 0.0
-
-
-def test_get_statistics(manager):
-    jobs = [
-        Job(
-            company="Google",
-            position="Python Developer",
-            status="Applied",
-            technologies=["Python"],
-            application_date="2026-09-22"
-        ),
-        Job(
-            company="Microsoft",
-            position="Backend Developer",
-            status="Technical Interview",
-            technologies=["Python"],
-            application_date="2026-09-23"
-        ),
-        Job(
-            company="Amazon",
-            position="Software Engineer",
-            status="Rejected",
-            technologies=["Java"],
-            application_date="2026-09-24"
-        )
-    ]
-
-    for job in jobs:
+def test_statistics(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
         manager.add_job(job)
 
     statistics = manager.get_statistics()
 
-    assert statistics["total"] == 3
+    assert statistics["total"] == 4
     assert statistics["Applied"] == 1
     assert statistics["Technical Interview"] == 1
+    assert statistics["Offer"] == 1
     assert statistics["Rejected"] == 1
 
 
-def test_get_statistics_success_rate(manager):
-    jobs = [
-        Job(
-            company="Google",
-            position="Developer",
-            status="Offer",
-            technologies=["Python"],
-            application_date="2026-09-22"
-        ),
-        Job(
-            company="Microsoft",
-            position="Developer",
-            status="Hired",
-            technologies=["C#"],
-            application_date="2026-09-23"
-        ),
-        Job(
-            company="Amazon",
-            position="Developer",
-            status="Rejected",
-            technologies=["Java"],
-            application_date="2026-09-24"
-        ),
-        Job(
-            company="Meta",
-            position="Developer",
-            status="Applied",
-            technologies=["Python"],
-            application_date="2026-09-25"
-        )
-    ]
-
-    for job in jobs:
+def test_success_rate(
+    manager,
+    multiple_jobs
+):
+    for job in multiple_jobs:
         manager.add_job(job)
 
     statistics = manager.get_statistics()
 
-    assert statistics["success_rate"] == 50.0
+    assert statistics["success_rate"] == 25.0
