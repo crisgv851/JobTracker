@@ -1,4 +1,3 @@
-
 from datetime import datetime
 
 
@@ -23,25 +22,39 @@ class Job:
         notes: str = ""
     ):
         # Validate company
-        if not company.strip():
+        if not isinstance(company, str) or not company.strip():
             raise ValueError("Company cannot be empty.")
 
         self.company = company.strip()
 
         # Validate position
-        if not position.strip():
+        if not isinstance(position, str) or not position.strip():
             raise ValueError("Position cannot be empty.")
 
         self.position = position.strip()
 
         # Validate technologies
+        if not isinstance(technologies, list):
+            raise ValueError("Technologies must be a list.")
+
         if not technologies:
             raise ValueError("Technologies cannot be empty.")
 
-        self.technologies = technologies
+        if not all(isinstance(technology, str) for technology in technologies):
+            raise ValueError("Each technology must be a string.")
+
+        cleaned_technologies = [
+            technology.strip()
+            for technology in technologies
+        ]
+
+        if any(not technology for technology in cleaned_technologies):
+            raise ValueError("Technologies cannot contain empty values.")
+
+        self.technologies = cleaned_technologies
 
         # Validate application date
-        if not application_date:
+        if not isinstance(application_date, str) or not application_date:
             raise ValueError("Application date cannot be empty.")
 
         try:
@@ -63,9 +76,16 @@ class Job:
         # Validate status
         self.change_status(status)
 
-        self.notes = notes
+        # Validate notes
+        if not isinstance(notes, str):
+            raise ValueError("Notes must be a string.")
+
+        self.notes = notes.strip()
 
     def change_status(self, new_status: str) -> None:
+        if not isinstance(new_status, str):
+            raise ValueError("Status must be a string.")
+
         if new_status in self.VALID_STATUSES:
             self.status = new_status
         else:
